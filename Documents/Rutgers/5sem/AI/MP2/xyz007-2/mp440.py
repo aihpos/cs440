@@ -176,37 +176,39 @@ Compute a random state
 '''
 def get_random_state(n):
     state = []
-    # i = 0:
-    for i in range(0, n):
-        i = random.randint(i, n) #shouldn't this be some more complex function
-        state.append(i)
-
-    # Your code here 
+    # Your code here
+    state = []
+    for i in range(n):  # creates list from 0 to n-1
+        state.append(random.randint(1, n))
     return state
 
-get_random_state(7)
 '''
 Compute pairs of queens in conflict 
 '''
 def compute_attacking_pairs(state):
     #print('Current state', state, 'length', len(state))
     number_attacking_pairs = 0
-    existing_els = [] # occupied spots
-    matrix_rep = [[0 for x in range(len(state))] for x in range(len(state))] #representation of the matrix, initialized to 0
-    for i in range(0, len(state)):
-       #print(state[i])
-        if (state[i]) in existing_els:
-            number_attacking_pairs+=1
-        existing_els.append(state[i])
-        #print("i", i, "state i", state[i]) 
-        matrix_rep[i][(state[i] - 1)] = "X" #denoting that the spot is taken
-        if(matrix_rep[i][(state[i]-1)] == matrix_rep[(state[i]-1)][i]):
-         #   print("diagonal")
-            number_attacking_pairs+=1
-    #print("number of pairs", number_attacking_pairs)
-    return number_attacking_pairs
+    # existing_els = [] # occupied spots
 
-compute_attacking_pairs(get_random_state(7))
+    for j in range(0, len(state)):
+        # iterates through every queen
+        for i in range(0, len(state)):
+            # iterates through every spot for every queen
+            if (state[i] == state[j]) & (i != j):
+                # found horizontal match
+                number_attacking_pairs += 1
+
+            # checks if 2 queens share a diagonal
+            rowdiff = abs(state[i] - state[j])
+            coldiff = abs(i - j)
+            # print('rowdiff ', rowdiff)
+            # print('coldiff ', coldiff)
+
+            if (rowdiff == coldiff) & (i != j):
+                number_attacking_pairs += 1
+
+    number_attacking_pairs = number_attacking_pairs / 2
+    return number_attacking_pairs
 
 '''
 The basic hill-climing algorithm for n queens
@@ -214,6 +216,53 @@ The basic hill-climing algorithm for n queens
 def hill_desending_n_queens(state, comp_att_pairs):
     final_state = []
     # Your code here
+
+    # initializes 2d matrix representing chessboard
+    n = len(state)
+    chessboard = [[0 for i in range(n)] for j in range(n)]
+    minvalue = n*n
+    minvalue_prev = n-1
+
+    while minvalue != 0:
+        minvalue = n*n
+        minvalue_i = n-1
+        minvalue_j = n-1
+        state = copy.copy(state)
+        tempstate = copy.copy(state)
+
+        for i in range(0,n):
+            # calculates all attacking pairs for each spot on board
+            # fills in chessboard with obj func values
+            for j in range(0,n):
+                tempstate[i] = j + 1
+                chessboard[i][j] = comp_att_pairs(tempstate)
+
+                # save the minimum value
+                if chessboard[i][j] < minvalue:
+                    # store value and location
+                    # this method ensures the leftmost, uppermost queen is moved if there are ties
+                    minvalue_i = i
+                    minvalue_j = j
+                    minvalue = chessboard[i][j]
+            # reset state value
+            tempstate = copy.copy(state)
+        # print('chessboard')
+        # print(chessboard)
+        # after finding the min value and target move, changes the state
+        # print('minvalue_i: ', minvalue_i)
+        state[minvalue_i] = minvalue_j + 1
+        # print('state:')
+        # print(state)
+
+        if minvalue == minvalue_prev:
+            # same values, throw error and break
+            # print('error same minvalue')
+            break
+
+        minvalue_prev = copy.copy(minvalue)
+
+    final_state = copy.copy(state)
+    # print(final_state)
     return final_state
 
 '''
@@ -222,10 +271,24 @@ Hill-climing algorithm for n queens with restart
 def n_queens(n, get_rand_st, comp_att_pairs, hill_descending):
     final_state = []
     # Your code here
+
+    # generates first random state
+    state = get_rand_st(n)
+    # computes initial attacking pairs
+    attacking_pairs = copy.copy(comp_att_pairs(state))
+
+    # runs hill descending algorithm
+    final_state = copy.copy(hill_descending(state, comp_att_pairs))
+
+    while attacking_pairs != 0:
+        # random restart
+        # generates first random state
+        state = get_rand_st(n)
+        # computes initial attacking pairs
+        attacking_pairs = copy.copy(comp_att_pairs(state))
+
+        # runs hill descending algorithm
+        final_state = copy.copy(hill_descending(state, comp_att_pairs))
+        attacking_pairs = compute_attacking_pairs(final_state)
+
     return final_state
-
-
-
-
-
-
